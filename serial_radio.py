@@ -3,17 +3,28 @@ import math
 import time
 import threading
 import serial
+from dataclasses import dataclass
+from typing import Any, List
 from aplink.aplink_messages import *
+
+@dataclass
+class Param:
+    name: str
+    value: float
+    type: str
 
 class SerialRadio():    
     testing: bool
     ser: serial.Serial
     status: SystemStatus
     aplink: APLink = APLink()
+    last_param_set: int
+    params: List[Param]
 
     def __init__(self, status: SystemStatus):
         self.status = status
         self.testing = False
+        self.last_param_set = 0
 
     def connect(self, port):
         try:
@@ -42,7 +53,29 @@ class SerialRadio():
 
                     print(f"Radio Received msg_id: {msg_id}")
 
-                    self.process_message(payload, msg_id)                    
+                    self.process_message(payload, msg_id)
+
+    def upload_params(self, params: List[Param]):
+        self.params = params
+        self.last_param_set = 0
+
+        self.send_next_param()
+    
+    def send_next_param(self):
+        param = self.params[self.last_param_set]
+        param_name = list(param.name.ljust(16, '\x00').encode('utf-8'))
+        if param.type == "f":
+            param_type = int(PARAM_TYPE.FLOAT)
+            param_value = list(struct.pack('=f', param.value))
+        elif param.type == "i":
+            param_type = int(PARAM_TYPE.INT32)
+            param_value = list(struct.pack('=i', param.value))
+
+        self.radio.transmit(aplink_param_set().pack(param_name, param_value, param_type))
+
+        print(f"Sent parameter {param_name}")
+
+        self.last_param_set += 1
     
     def generate_fake_telemetry(self):
         self.status.telemetry.batt_voltage = 3 + 1 * math.sin(time.time() / 2)
@@ -57,3 +90,9 @@ class SerialRadio():
             vehicle_status.unpack(payload)
             if vehicle_status.mode_id == MODE_ID.CONFIG:
                 self.status.telemetry.status = "CFG"
+            elif vehicle_status.mode_id == MODE_ID.TAKEOFF:
+                self.status.telemetry.status = "TKO"
+            elif vehicle_status.mode_id == MODE_ID.LAND:
+                self.status.telemetry.status = "LND"
+        elif msg_id == aplink_param_set.msg_id:
+            self.send_next_param()

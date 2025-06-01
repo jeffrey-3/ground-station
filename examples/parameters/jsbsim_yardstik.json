@@ -1,0 +1,82 @@
+[
+    {"name": "TKO_ALT", "value": 6.0, "type": "f"},
+    {"name": "TKO_PTCH", "value": 15.0, "type": "f"},
+
+    {"name": "MIS_THR", "value": 0.1, "type": "f"},
+    {"name": "MIS_SPD", "value": 20.0, "type": "f"},
+    {"name": "MIN_SPD", "value": 5.0, "type": "f"},
+    {"name": "MAX_SPD", "value": 30.0, "type": "f"},
+
+    {"name": "LND_SPD", "value": 15.0, "type": "f"},
+    {"name": "LND_FL_ALT", "value": 3.0, "type": "f"},
+    {"name": "LND_FL_SINK", "value": 0.2, "type": "f"},
+
+    {"name": "ATT_PTCH_KP", "value": 0.1, "type": "f"},
+    {"name": "ATT_PTCH_KI", "value": 0.05, "type": "f"},
+    {"name": "ATT_ROLL_KP", "value": 0.05, "type": "f"},
+    {"name": "ATT_ROLL_KI", "value": 0.0, "type": "f"},
+
+    {"name": "TECS_THR_KP", "value": 0.1, "type": "f"},
+    {"name": "TECS_THR_KI", "value": 0.02, "type": "f"},
+    {"name": "TECS_PTCH_KP", "value": 0.2, "type": "f"},
+    {"name": "TECS_PTCH_KI", "value": 0.05, "type": "f"},
+    {"name": "TECS_PTCH_LIM", "value": 30.0, "type": "f"},
+
+    {"name": "L1_PERIOD", "value": 10.0, "type": "f"},
+    {"name": "L1_ROLL_LIM", "value": 50.0, "type": "f"},
+
+    {"name": "NAV_ACC_RAD", "value": 50.0, "type": "f"},
+
+    {"name": "PWM_MIN_ELE", "value": 1000, "type": "i"},
+    {"name": "PWM_MIN_RUD", "value": 1000, "type": "i"},
+    {"name": "PWM_MIN_THR", "value": 1000, "type": "i"},
+    {"name": "PWM_MIN_AUX1", "value": 1000, "type": "i"},
+    {"name": "PWM_MIN_AUX2", "value": 1000, "type": "i"},
+    {"name": "PWM_MIN_AUX3", "value": 1000, "type": "i"},
+    {"name": "PWM_MAX_ELE", "value": 2000, "type": "i"},
+    {"name": "PWM_MAX_RUD", "value": 2000, "type": "i"},
+    {"name": "PWM_MAX_THR", "value": 2000, "type": "i"},
+    {"name": "PWM_MAX_AUX1", "value": 2000, "type": "i"},
+    {"name": "PWM_MAX_AUX2", "value": 2000, "type": "i"},
+    {"name": "PWM_MAX_AUX3", "value": 2000, "type": "i"},
+    {"name": "PWM_REV_ELE", "value": 1, "type": "i"},
+    {"name": "PWM_REV_RUD", "value": 0, "type": "i"},
+    {"name": "PWM_REV_THR", "value": 0, "type": "i"},
+    {"name": "PWM_REV_AUX1", "value": 0, "type": "i"},
+    {"name": "PWM_REV_AUX2", "value": 0, "type": "i"},
+    {"name": "PWM_REV_AUX3", "value": 0, "type": "i"},
+
+    {"name": "RC_MAX_DUTY", "value": 1900, "type": "i"},
+    {"name": "RC_MIN_DUTY", "value": 1100, "type": "i"},
+
+    {"name": "AHRS_BETA_GAIN", "value": 0.005, "type": "f"},
+    {"name": "AHRS_MAG_DECL", "value": -10.2, "type": "f"},
+    {"name": "AHRS_ACC_MAX", "value": 2.0, "type": "f"},
+
+    {"name": "GYR_OFF_X", "value": 0.0, "type": "f"},
+    {"name": "GYR_OFF_Y", "value": 0.0, "type": "f"},
+    {"name": "GYR_OFF_Z", "value": 0.0, "type": "f"},
+    {"name": "ACC_OFF_X", "value": 0.0, "type": "f"},
+    {"name": "ACC_OFF_Y", "value": 0.0, "type": "f"},
+    {"name": "ACC_OFF_Z", "value": 0.0, "type": "f"},
+    {"name": "MAG_HI_X", "value": 0.0, "type": "f"},
+    {"name": "MAG_HI_Y", "value": 0.0, "type": "f"},
+    {"name": "MAG_HI_Z", "value": 0.0, "type": "f"},
+    {"name": "MAG_SI_XX", "value": 1.0, "type": "f"},
+    {"name": "MAG_SI_XY", "value": 0.0, "type": "f"},
+    {"name": "MAG_SI_XZ", "value": 0.0, "type": "f"},
+    {"name": "MAG_SI_YX", "value": 0.0, "type": "f"},
+    {"name": "MAG_SI_YY", "value": 1.0, "type": "f"},
+    {"name": "MAG_SI_YZ", "value": 0.0, "type": "f"},
+    {"name": "MAG_SI_ZX", "value": 0.0, "type": "f"},
+    {"name": "MAG_SI_ZY", "value": 0.0, "type": "f"},
+    {"name": "MAG_SI_ZZ", "value": 1.0, "type": "f"},
+
+    {"name": "EKF_BARO_VAR", "value": 1000.0, "type": "f"},
+    {"name": "EKF_GNSS_VAR", "value": 1000.0, "type": "f"},
+    {"name": "EKF_OF_VAR", "value": 1000.0, "type": "f"},
+    {"name": "EKF_OF_MIN", "value": 50, "type": "i"},
+    {"name": "EKF_OF_MAX", "value": 2000, "type": "i"},
+
+    {"name": "ENABLE_HITL", "value": 1, "type": "i"}
+]

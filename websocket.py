@@ -1,19 +1,21 @@
 from websockets.sync.server import serve
-import websockets
 import json
 import time
 import threading
 from queue import Queue
+from serial_radio import Param
+from typing import List
 from status import SystemStatus
+from base_radio import BaseRadio
 from serial_radio import SerialRadio
+from test_radio import TestRadio
 
 class WebSocket():
     status: SystemStatus
-    serial_radio: SerialRadio
+    radio: BaseRadio
 
-    def __init__(self, status: SystemStatus, serial_radio: SerialRadio):
+    def __init__(self, status: SystemStatus):
         self.status = status
-        self.serial_radio = serial_radio
 
     def start(self):
         serve(self.handle_client, "localhost", 8765).serve_forever()
@@ -53,7 +55,7 @@ class WebSocket():
 
     def process_command(self, command):
         if command["type"] == "connect":
-            self.serial_radio.connect(command["port"])
+            self.connect(command["port"])
         elif command["type"] == "loiter":
             self.status.mission.type = command["type"]
             self.status.mission.data = command["data"]
@@ -63,3 +65,15 @@ class WebSocket():
         elif command["type"] == "land":
             self.status.mission.type = command["type"]
             self.status.mission.data = command["data"]
+        elif command["type"] == "parameters":
+            params_list: List[Param] = [Param(param["name"], param["value"], param["type"]) for param in command["data"]]
+            print(params_list)
+            self.radio.upload_params(params_list)
+    
+    def connect(self, port: str):
+        if port == "Testing":
+            self.radio = TestRadio()
+        else:
+            self.radio = SerialRadio()
+
+        self.radio.connect(port)

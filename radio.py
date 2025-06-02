@@ -2,8 +2,7 @@ from queue import Queue
 import threading
 import serial
 import serial.tools.list_ports
-import time
-import math
+from serial_emulator import SerialEmulator
 from typing import List
 from dataclasses import dataclass
 from aplink.aplink_messages import *
@@ -16,8 +15,6 @@ class Param:
 
 class Radio():    
     ser: serial.Serial
-    dummy_serial_rx_buff: Queue[bytes] = Queue()
-    dummy_serial_tx_buff: Queue[bytes] = Queue()
     connected: bool = False
     port: str = ""
     aplink: APLink = APLink()
@@ -27,9 +24,10 @@ class Radio():
     def __init__(self, radio_input: Queue[dict], ws_input: Queue[dict]):
         self.radio_input: Queue = radio_input
         self.ws_input: Queue = ws_input # JSON data sent to websocket
-        threading.Thread(target=self.run, daemon=True).start()
+        self.serial_emulator = SerialEmulator()
+        threading.Thread(target=self.main_thread, daemon=True).start()
 
-    def run(self):
+    def main_thread(self):
         while True:
             input = self.radio_input.get()
             if input.type == "connect":
@@ -40,17 +38,26 @@ class Radio():
                 self.send_params(input.params)
             elif input.type == "send_mission":
                 return
+            elif input.type == "req_params":
+                return
+            elif input.type == "req_mission":
+                return
+    
+    def serial_thread(self):
+        while True:
+            byte = self.read_byte()
+            result = self.aplink.parse_byte(ord(byte))
+            if result is not None:
+                self.process_message(*result)
 
     def connect(self, port: str):
         try:
-            if self.port == "Testing":
-                threading.Thread(target=self.dummy_serial_thread, daemon=True).start()
-            else:
+            if self.port != "Testing":
                 self.ser = serial.Serial(port, 115200, timeout=1)
             self.port = port
             self.connected = True
             self.emit_status()
-            threading.Thread(target=self.read, daemon=True).start()
+            threading.Thread(target=self.serial_thread, daemon=True).start()
         except:
             print("Failed to connect to port")
             self.port = ""
@@ -71,22 +78,15 @@ class Radio():
 
         self.send_next_param()
     
-    def read(self):
-        while True:
-            byte = self.read_byte()
-            result = self.aplink.parse_byte(ord(byte))
-            if result is not None:
-                self.process_message(*result)
-    
     def read_byte(self):
         if self.port == "Testing":
-            return self.dummy_serial_rx_buff.get()
+            return self.serial_emulator.read(1)
         else:
             return self.ser.read(1)
     
     def transmit(self, bytes):
         if self.port == "Testing":
-            self.dummy_serial_tx_buff.put(bytes)
+            self.serial_emulator.write(bytes)
         else:
             self.ser.write(bytes)
     
@@ -137,37 +137,3 @@ class Radio():
         print(f"Sent parameter {param_name}")
 
         self.last_param_set += 1
-    
-    def dummy_serial_thread(self):
-        while True:
-            self.dummy_serial_rx_buff.put(aplink_vehicle_status_full().pack(
-                roll=0,
-                roll_sp=0,
-                pitch=0,
-                pitch_sp=0,
-                yaw=45 * math.sin(time.time() / 2),
-                alt=0,
-                alt_sp=0,
-                spd=0,
-                spd_sp=0,
-                lat=43.8791 + 0.0001 * math.sin(time.time()),
-                lon=-79.4135 + 0.0001 * math.sin(time.time()),
-                current_waypoint=0,
-                mode_id=0
-            ))
-
-            self.dummy_serial_rx_buff.put(aplink_gps_raw().pack(
-                lat=0,
-                lon=0,
-                sats=int(16 + 4 * math.sin(time.time())),
-                fix=True
-            ))
-
-            self.dummy_serial_rx_buff.put(aplink_power().pack(
-                batt_volt=3 + 1 * math.sin(time.time() / 2),
-                batt_curr=0,
-                batt_used=0,
-                ap_curr=0
-            ))
-
-            time.sleep(0.03)

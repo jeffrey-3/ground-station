@@ -5,16 +5,30 @@ import threading
 from queue import Queue
 from radio import Param
 from typing import List
-from status import SystemStatus
-from radio import SerialRadio
+from radio import Radio
 
-class WebSocket():
-    status: SystemStatus
-    radio: SerialRadio
 
-    def __init__(self, status: SystemStatus):
-        self.status = status
-        self.radio = SerialRadio()
+# # Not all fields need to be filled out. For path you don't need to fill out final leg or glideslope.
+# @dataclass
+# class MissionItem:
+#     type: str
+#     lat: float
+#     lon: float
+#     radius: float
+#     direction: str
+#     final_leg: Optional[float]
+#     glideslope: Optional[float]
+
+# # Store in array
+# # For land or loiter, you would have one mission item in array
+# # For path, you have multiple mission items in array
+# mission = []
+
+class WebSocket:
+    def __init__(self, ws_input: Queue[dict], radio_input: Queue[dict]):
+        self.ws_input = ws_input
+        self.radio_input = radio_input
+        self.radio = Radio()
 
     def start(self):
         serve(self.handle_client, "localhost", 8765).serve_forever()

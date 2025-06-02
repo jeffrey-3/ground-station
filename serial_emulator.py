@@ -4,7 +4,7 @@ import time
 from typing import List
 import math
 
-class SerialEmulator():
+class SerialEmulator:
     def __init__(self):
         self.aplink = APLink()
         self.rx_buff = List[bytes]

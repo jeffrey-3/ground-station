@@ -4,14 +4,25 @@ import serial
 import serial.tools.list_ports
 import time
 import math
+from typing import List
+from dataclasses import dataclass
 from aplink.aplink_messages import *
 
-class SerialRadio():    
+@dataclass
+class Param:
+    name: str
+    value: float
+    type: str
+
+class Radio():    
     ser: serial.Serial
     dummy_serial_rx_buff: Queue[bytes] = Queue()
     dummy_serial_tx_buff: Queue[bytes] = Queue()
     connected: bool = False
     port: str = ""
+    aplink: APLink = APLink()
+    last_param_set: int
+    params: List[Param]
 
     def __init__(self, radio_input: Queue[dict], ws_input: Queue[dict]):
         self.radio_input: Queue = radio_input
@@ -21,11 +32,14 @@ class SerialRadio():
     def run(self):
         while True:
             input = self.radio_input.get()
-
             if input.type == "connect":
                 self.connect(input.port)
             elif input.type == "status":
                 self.emit_status()
+            elif input.type == "send_params":
+                self.send_params(input.params)
+            elif input.type == "send_mission":
+                return
 
     def connect(self, port: str):
         try:
@@ -50,6 +64,12 @@ class SerialRadio():
             "port": self.port,
             "available": [port.device for port in serial.tools.list_ports.comports()] + ["Testing"]
         })
+    
+    def send_params(self, params: List[Param]):
+        self.params = params
+        self.last_param_set = 0
+
+        self.send_next_param()
     
     def read(self):
         while True:
@@ -121,26 +141,33 @@ class SerialRadio():
     def dummy_serial_thread(self):
         while True:
             self.dummy_serial_rx_buff.put(aplink_vehicle_status_full().pack(
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                43.8791 + 0.0001 * math.sin(time.time()),
-                -79.4135 + 0.0001 * math.sin(time.time()),
-                0,
-                0
+                roll=0,
+                roll_sp=0,
+                pitch=0,
+                pitch_sp=0,
+                yaw=45 * math.sin(time.time() / 2),
+                alt=0,
+                alt_sp=0,
+                spd=0,
+                spd_sp=0,
+                lat=43.8791 + 0.0001 * math.sin(time.time()),
+                lon=-79.4135 + 0.0001 * math.sin(time.time()),
+                current_waypoint=0,
+                mode_id=0
             ))
 
             self.dummy_serial_rx_buff.put(aplink_gps_raw().pack(
-                0,
-                0,
-                int(16 + 4 * math.sin(time.time())),
-                True
+                lat=0,
+                lon=0,
+                sats=int(16 + 4 * math.sin(time.time())),
+                fix=True
+            ))
+
+            self.dummy_serial_rx_buff.put(aplink_power().pack(
+                batt_volt=3 + 1 * math.sin(time.time() / 2),
+                batt_curr=0,
+                batt_used=0,
+                ap_curr=0
             ))
 
             time.sleep(0.03)

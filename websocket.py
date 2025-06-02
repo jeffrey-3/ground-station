@@ -3,10 +3,10 @@ import json
 import time
 import threading
 from queue import Queue
-from serial_radio import Param
+from radio import Param
 from typing import List
 from status import SystemStatus
-from serial_radio import SerialRadio
+from radio import SerialRadio
 
 class WebSocket():
     status: SystemStatus

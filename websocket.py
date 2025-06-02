@@ -6,16 +6,15 @@ from queue import Queue
 from serial_radio import Param
 from typing import List
 from status import SystemStatus
-from base_radio import BaseRadio
 from serial_radio import SerialRadio
-from test_radio import TestRadio
 
 class WebSocket():
     status: SystemStatus
-    radio: BaseRadio
+    radio: SerialRadio
 
     def __init__(self, status: SystemStatus):
         self.status = status
+        self.radio = SerialRadio()
 
     def start(self):
         serve(self.handle_client, "localhost", 8765).serve_forever()
@@ -55,7 +54,7 @@ class WebSocket():
 
     def process_command(self, command):
         if command["type"] == "connect":
-            self.connect(command["port"])
+            self.radio.connect(command["port"])
         elif command["type"] == "loiter":
             self.status.mission.type = command["type"]
             self.status.mission.data = command["data"]
@@ -69,11 +68,3 @@ class WebSocket():
             params_list: List[Param] = [Param(param["name"], param["value"], param["type"]) for param in command["data"]]
             print(params_list)
             self.radio.upload_params(params_list)
-    
-    def connect(self, port: str):
-        if port == "Testing":
-            self.radio = TestRadio()
-        else:
-            self.radio = SerialRadio()
-
-        self.radio.connect(port)

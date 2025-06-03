@@ -8,5 +8,5 @@ if __name__ == "__main__":
 
     radio = Radio(radio_input, ws_input)
     websocket = WebSocket(ws_input, radio_input)
-    
+
     websocket.start()

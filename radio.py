@@ -40,6 +40,7 @@ class Radio:
         
         while True:
             message = self.radio_input.get()
+            print(f"Radio receive message: {message}")
             handler = message_handlers.get(message["type"])
             if handler:
                 handler(message)
@@ -71,7 +72,7 @@ class Radio:
     def _serial_thread(self) -> None:
         """Thread for continuous serial communication."""
         while True:
-            byte = self._read_byte()
+            byte = self._read_byte()[0]
             result = self.aplink.parse_byte(ord(byte))
             if result is not None:
                 self._process_message(*result)
@@ -147,7 +148,9 @@ class Radio:
             MODE_ID.LAND: "LND",
         }
 
+        # Modify and scale
         status_json["type"] = "vehicle_status"
+        status_json["yaw"] = float(status_json["yaw"]) / 100
         status_json["mode"] = mode_mapping.get(vehicle_status.mode_id, "UNK")
         
         self.ws_input.put(status_json)

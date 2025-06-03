@@ -48,8 +48,6 @@ class APLink:
         return None
     
     def unpack(self, packet: bytes) -> Optional[Tuple[bytes, int]]:
-        print("Unpack aplink")
-
         """Unpack a complete APLink packet"""
         if len(packet) < self.HEADER_LEN + self.FOOTER_LEN:
             print("aplink len too small")
@@ -89,8 +87,6 @@ class APLink:
         body = header[1:] + payload  # For checksum calculation
         checksum = self._crc16(body)
         footer = struct.pack('>H', checksum)
-
-        print(f"PACKED CHECKSUM: {checksum} {footer}")
         
         return header + payload + footer
 

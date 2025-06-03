@@ -7,16 +7,18 @@ import math
 class SerialEmulator:
     def __init__(self):
         self.aplink = APLink()
-        self.rx_buff = List[bytes]
-        self.tx_buff = List[bytes]
-        threading.Thread(self._thread, daemon=True).start()
+        self.rx_buff = []
+        self.tx_buff = []
+        threading.Thread(target=self._thread, daemon=True).start()
     
     def write(self, bytes):
         for byte in bytes:
             self.rx_buff.append(byte)
 
     def read(self, num):
-        return [self.tx_buff.pop(0) for i in range(num)]
+        while len(self.tx_buff) < num:
+            pass
+        return [struct.pack("=B", self.tx_buff.pop(0)) for i in range(num)]
     
     def _thread(self):
         while True:
@@ -40,13 +42,13 @@ class SerialEmulator:
             roll_sp=0,
             pitch=0,
             pitch_sp=0,
-            yaw=45 * math.sin(time.time() / 2),
+            yaw=int(100 * 45 * math.sin(time.time() / 2)),
             alt=0,
             alt_sp=0,
             spd=0,
             spd_sp=0,
-            lat=43.8791 + 0.0001 * math.sin(time.time()),
-            lon=-79.4135 + 0.0001 * math.sin(time.time()),
+            lat=int(43.8791 + 0.0001 * math.sin(time.time())),
+            lon=int(-79.4135 + 0.0001 * math.sin(time.time())),
             current_waypoint=0,
             mode_id=0
         ): 
@@ -61,7 +63,7 @@ class SerialEmulator:
             self.tx_buff.append(byte)
 
         for byte in aplink_power().pack(
-            batt_volt=3 + 1 * math.sin(time.time() / 2),
+            batt_volt=int(3 + 1 * math.sin(time.time() / 2)),
             batt_curr=0,
             batt_used=0,
             ap_curr=0

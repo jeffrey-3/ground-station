@@ -6,12 +6,25 @@ from serial_emulator import SerialEmulator
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
 from aplink.aplink_messages import *
+import time
+from enum import Enum
 
 @dataclass
 class Param:
     name: str
     value: float
     type: str
+
+
+# Structure of radio_input queue dict:
+# {
+#  "type": RadioCommands.CONNECT
+#  "data": "Whatever data"
+# }
+
+
+
+# List[Param] = [Param(param["name"], param["value"], param["type"]) for param in command["data"]]
 
 class Radio:
     def __init__(self, radio_input: Queue[dict], ws_input: Queue[dict]):
@@ -27,6 +40,7 @@ class Radio:
         
         threading.Thread(target=self._main_thread, daemon=True).start()
 
+    # Reads radio_input queue for messages and calls the corresponding handler
     def _main_thread(self) -> None:
         """Main processing thread that handles incoming messages."""
         message_handlers = {
@@ -69,6 +83,7 @@ class Radio:
         """Handle mission request."""
         pass  # Implement as needed
 
+    # Polls serial data and calls self._process_message() if packet is complete
     def _serial_thread(self) -> None:
         """Thread for continuous serial communication."""
         while True:
@@ -111,12 +126,14 @@ class Radio:
         self.last_param_set = 0
         self._send_next_param()
     
+    # Read byte from serial
     def _read_byte(self) -> bytes:
         """Read a single byte from the active connection."""
         if self.port == "Testing":
             return self.serial_emulator.read(1)
         return self.serial_conn.read(1)
     
+    # Transmit bytes over serial
     def transmit(self, data: bytes) -> None:
         """Send data through the active connection."""
         if self.port == "Testing":
@@ -124,6 +141,7 @@ class Radio:
         else:
             self.serial_conn.write(data)
     
+    # Calls the corresponding handler for serial messages which then sends message to websocket frontend
     def _process_message(self, payload: bytes, msg_id: int) -> None:
         """Process incoming messages based on their ID."""
         message_handlers = {
@@ -150,7 +168,9 @@ class Radio:
 
         # Modify and scale
         status_json["type"] = "vehicle_status"
-        status_json["yaw"] = float(status_json["yaw"]) / 100
+        status_json["yaw"] = float(status_json["yaw"]) / 1e2
+        status_json["lat"] = float(status_json["lat"]) / 1e7
+        status_json["lon"] = float(status_json["lon"]) / 1e7
         status_json["mode"] = mode_mapping.get(vehicle_status.mode_id, "UNK")
         
         self.ws_input.put(status_json)

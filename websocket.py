@@ -4,14 +4,14 @@ import json
 import threading
 import time
 from queue import Queue
-from radio import Param
-from typing import List
+
+# TODO: Use async instead of threading
 
 class WebSocket:
-    def __init__(self, ws_input: Queue[dict], radio_input: Queue[dict]):
-        self.ws_input = ws_input
-        self.radio_input = radio_input
-        self.last_ping = time.time()
+    """Direct JSON passthrough to frontend via websocket"""
+    def __init__(self, telemetry_json_output: Queue[dict], ws_commands: Queue[dict]):
+        self.telemetry_json_output = telemetry_json_output
+        self.ws_commands = ws_commands
 
     def start(self):
         print("Server started")
@@ -24,16 +24,10 @@ class WebSocket:
         def send():
             while self.active:
                 try:
-                    if self.ws_input.empty():
-                        if time.time() - self.last_ping > 0.02:
-                            websocket.send(json.dumps({
-                                "type": "ping"
-                            }))
-                            self.last_ping = time.time()
-                        time.sleep(0.001)
+                    if self.telemetry_json_output.empty():
+                        time.sleep(0.0001)
                     else:
-                        message = self.ws_input.get()
-                        print(f"Websocket send: {message}")
+                        message = self.telemetry_json_output.get()
                         websocket.send(json.dumps(message))
                 except websockets.exceptions.ConnectionClosed:
                     print("Client disconnected")
@@ -43,13 +37,12 @@ class WebSocket:
                     print(f"Error in send thread: {e}")
                     self.active = False
                     break
-            
+
         def read():
             try:
                 for message in websocket:
                     data = json.loads(message)
-                    print("Received command:", data)
-                    self.process_command(data)
+                    self.ws_commands.put(data)
             except websockets.exceptions.ConnectionClosed:
                 print("Client disconnected during read")
             except Exception as e:
@@ -65,22 +58,3 @@ class WebSocket:
 
         send_thread.join()
         read_thread.join()
-
-    def process_command(self, command):
-        print(f"Websocket receive command: {command}")
-        if command["type"] == "connect":
-            self.radio_input.put({
-                "type": "connect",
-                "port": command["port"]
-            })
-        elif command["type"] == "serial_status":
-            self.radio_input.put({
-                "type": "status"
-            })
-        elif command["type"] == "parameters":
-            params_list: List[Param] = [Param(param["name"], param["value"], param["type"]) for param in command["data"]]
-            print(params_list)
-            self.radio_input.put({
-                "type": "send_params",
-                "params": params_list
-            })

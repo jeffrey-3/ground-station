@@ -1,7 +1,6 @@
 from aplink.aplink_messages import *
 import threading
 import time
-from typing import List
 import math
 
 class SerialEmulator:
@@ -9,6 +8,8 @@ class SerialEmulator:
         self.aplink = APLink()
         self.rx_buff = []
         self.tx_buff = []
+        self.num_items = 0
+        self.last_item_received = 0
         threading.Thread(target=self._thread, daemon=True).start()
     
     def write(self, bytes):
@@ -17,7 +18,7 @@ class SerialEmulator:
 
     def read(self, num):
         while len(self.tx_buff) < num:
-            pass
+            time.sleep(0.0001)
         return [struct.pack("=B", self.tx_buff.pop(0)) for i in range(num)]
     
     def _thread(self):
@@ -28,28 +29,48 @@ class SerialEmulator:
     
     def _generate_ack(self):
         while len(self.rx_buff) > 0:
-            byte = self.rx_buff.pop(0)
+            byte = struct.pack("=B", self.rx_buff.pop(0))
             result = self.aplink.parse_byte(ord(byte))
             if result is not None:
                 payload, msg_id = result
                 if msg_id == aplink_param_set.msg_id:
-                    for byte in payload:
-                        self.tx_buff.append(byte) # Return ack for param set by echoing payload back
+                    param_set = aplink_param_set()
+                    param_set.unpack(payload)
+
+                    # Return ack for param set by echoing payload back
+                    for byte in aplink_param_set().pack(param_set.name, param_set.value, param_set.type):
+                        self.tx_buff.append(byte) 
+                elif msg_id == aplink_waypoints_count.msg_id:
+                    waypoints_count = aplink_waypoints_count()
+                    waypoints_count.unpack(payload)
+
+                    self.num_items = waypoints_count.num_waypoints
+                    self.last_item_received = 0
+
+                    for byte in aplink_request_waypoint().pack(self.last_item_received):
+                        self.tx_buff.append(byte)
+                elif msg_id == aplink_mission_item.msg_id:
+                    mission_item = aplink_mission_item()
+                    mission_item.unpack(payload)
+
+                    self.last_item_received += 1
+
+                    if self.last_item_received == self.num_items:
+                        for byte in aplink_waypoints_ack().pack(True):
+                            self.tx_buff.append(byte)
+                    else:
+                        for byte in aplink_request_waypoint().pack(self.last_item_received):
+                            self.tx_buff.append(byte)
     
     def _generate_fake_telemetry(self):
         for byte in aplink_vehicle_status_full().pack(
             roll=0,
-            roll_sp=0,
             pitch=0,
-            pitch_sp=0,
-            yaw=int(100 * 45 * math.sin(time.time() / 2)),
+            yaw=int(100 * (45 * math.sin(time.time() / 2))),
             alt=0,
-            alt_sp=0,
             spd=0,
-            spd_sp=0,
-            lat=int(43.8791 + 0.0001 * math.sin(time.time())),
-            lon=int(-79.4135 + 0.0001 * math.sin(time.time())),
-            current_waypoint=0,
+            lat=int(1e7 * (43.8791 + 0.0001 * math.sin(time.time()))),
+            lon=int(1e7 * (-79.4135 + 0.0001 * math.sin(time.time()))),
             mode_id=0
         ): 
             self.tx_buff.append(byte) 

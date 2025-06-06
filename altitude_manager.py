@@ -6,7 +6,7 @@ class AltitudeManager:
         self.telemetry_json_output = telemetry_json_output
     
     def send_altitude(self, message):
-        self._transmit(aplink_set_altitude().pack(message["data"]))
+        self.send_fn(aplink_set_altitude().pack(message["data"]))
     
     def handle_set_altitude_result(self, payload):
         msg = aplink_set_altitude_result()

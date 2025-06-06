@@ -1,9 +1,9 @@
 from aplink.aplink_messages import *
 
 class AltitudeManager:
-    def __init__(self, send_fn, telemetry_queue):
+    def __init__(self, send_fn, telemetry_json_output):
         self.send_fn = send_fn
-        self.telemetry_queue = telemetry_queue
+        self.telemetry_json_output = telemetry_json_output
     
     def send_altitude(self, message):
         self._transmit(aplink_set_altitude().pack(message["data"]))

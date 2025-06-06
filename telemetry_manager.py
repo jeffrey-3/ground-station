@@ -1,9 +1,9 @@
 from aplink.aplink_messages import *
 
 class TelemetryManager:
-    def __init__(self, send_fn, telemetry_queue):
+    def __init__(self, send_fn, telemetry_json_output):
         self.send_fn = send_fn
-        self.telemetry_queue = telemetry_queue
+        self.telemetry_json_output = telemetry_json_output
     
     def handle_cal_sensors(self, payload):
         msg = aplink_cal_sensors()

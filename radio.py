@@ -1,6 +1,8 @@
 from queue import Queue
 import threading
 import serial
+from message_router import MessageRouter
+from param_manager import ParamManager
 import serial.tools.list_ports
 from serial_emulator import SerialEmulator
 from typing import Optional, Dict, Any
@@ -18,30 +20,38 @@ class Radio:
         self.last_param_set = 0
         self.params = []
         self.mission_items = []
+
+        self.router = MessageRouter()
+        self.router.register("connect", self._handle_connect)
+        self.router.register("status", self.emit_status)
+        self.router.register("get_current_mission", self._handle_get_current_mission)
+        # self.router.register("get_current_params", self._handle_get_current_params)
+        self.router.register("send_altitude", self._handle_send_altitude)
+        self.router.register("send_params", self._handle_send_params)
+        self.router.register("send_mission", self._handle_send_mission)
+        self.router.register("req_params", self._handle_request_params)
+        self.router.register("req_mission", self._handle_request_mission)
         
         threading.Thread(target=self._main_thread, daemon=True).start()
 
     # Reads ws_commands queue for messages and calls the corresponding handler
     def _main_thread(self) -> None:
-        """Main processing thread that handles incoming messages."""
-        message_handlers = {
-            "connect": self._handle_connect,
-            "status": self._handle_status,
-            "get_current_mission": self._handle_get_current_mission,
-            # "get_current_params": print, # Get name of DIR
-            "send_altitude": self._handle_send_altitude,
-            "send_params": self._handle_send_params,
-            "send_mission": self._handle_send_mission,
-            "req_params": self._handle_request_params,
-            "req_mission": self._handle_request_mission,
-        }
-        
         while True:
-            message = self.ws_commands.get()
-            print(f"Radio receive message: {message}")
-            handler = message_handlers.get(message["type"])
-            if handler:
-                handler(message)
+            msg = self.ws_commands.get()
+            print(f"Radio receive message: {msg}")
+            self.router.handle(msg)
+
+        # message_handlers = {
+        #     "connect": self._handle_connect,
+        #     "status": self._handle_status,
+        #     "get_current_mission": self._handle_get_current_mission,
+        #     # "get_current_params": print, # Get name of DIR
+        #     "send_altitude": self._handle_send_altitude,
+        #     "send_params": self._handle_send_params,
+        #     "send_mission": self._handle_send_mission,
+        #     "req_params": self._handle_request_params,
+        #     "req_mission": self._handle_request_mission,
+        # }
     
     def _handle_send_altitude(self, message):
         self._transmit(aplink_set_altitude().pack(message["data"]))
@@ -103,8 +113,14 @@ class Radio:
             self.port = ""
             self.connected = False
             self.emit_status()
+    
+    def send_params(self, params) -> None:
+        """Initiate parameter sending process."""
+        self.params = params
+        self.last_param_set = 0
+        self._send_next_param()
 
-    def emit_status(self) -> None:
+    def emit_status(self, message=None) -> None:
         """Send current connection status to websocket."""
         available_ports = [port.device for port in serial.tools.list_ports.comports()]
         self.telemetry_json_output.put({
@@ -258,7 +274,7 @@ class Radio:
         status_json["mode"] = mode_mapping.get(vehicle_status.mode_id, "UNK")
         
         self.telemetry_json_output.put(status_json)
-
+    
     def _handle_param_set(self, _: bytes) -> None:
         """Handle parameter set acknowledgment."""
         if self.last_param_set == len(self.params):

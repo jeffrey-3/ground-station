@@ -19,7 +19,9 @@ class SerialEmulator:
     def read(self, num):
         while len(self.tx_buff) < num:
             time.sleep(0.0001)
-        return [struct.pack("=B", self.tx_buff.pop(0)) for _ in range(num)]
+        data = bytes(self.tx_buff[:num])
+        del self.tx_buff[:num]
+        return data
 
     def _thread(self):
         while True:
@@ -72,8 +74,8 @@ class SerialEmulator:
     def _generate_fake_telemetry(self):
         t = time.time()
         self._send_bytes(aplink_vehicle_status_full().pack(
-            roll=0,
-            pitch=0,
+            roll=int(100 * (20 * math.sin(t / 2))),
+            pitch=int(100 * (40 * math.sin(t / 2))),
             yaw=int(100 * (45 * math.sin(t / 2))),
             alt=int(100 * (11 + 1 * math.sin(t))),
             spd=0,

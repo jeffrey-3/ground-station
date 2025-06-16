@@ -55,7 +55,7 @@ class Radio:
             if message["port"] == "Testing":
                 self.serial_emulator = SerialEmulator()
             else:
-                self.serial_conn = serial.Serial(message["port"], 115200, timeout=1)
+                self.serial_conn = serial.Serial(message["port"], 115200, timeout=None)
             
             self.port = message["port"]
             self.connected = True
@@ -73,7 +73,7 @@ class Radio:
     # Polls serial data and calls self._process_message() if packet is complete
     def _serial_thread(self) -> None:
         while True:
-            byte = self._read_byte()[0]
+            byte = self._read_byte()
             result = self.aplink.parse_byte(ord(byte))
             if result is not None:
                 self._process_message(*result)

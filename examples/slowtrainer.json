@@ -23,6 +23,7 @@
     {"name": "TECS_PTCH_LIM", "value": 30.0, "type": "f"},
 
     {"name": "L1_PERIOD", "value": 10.0, "type": "f"},
+    {"name": "L1_DAMPING", "value": 1.0, "type": "f"},
     {"name": "L1_ROLL_LIM", "value": 50.0, "type": "f"},
 
     {"name": "NAV_ACC_RAD", "value": 50.0, "type": "f"},
@@ -41,7 +42,6 @@
     {"name": "PWM_MAX_AUX3", "value": 2000, "type": "i"},
     {"name": "PWM_REV_ELE", "value": 1, "type": "i"},
     {"name": "PWM_REV_RUD", "value": 0, "type": "i"},
-    {"name": "PWM_REV_THR", "value": 0, "type": "i"},
     {"name": "PWM_REV_AUX1", "value": 0, "type": "i"},
     {"name": "PWM_REV_AUX2", "value": 0, "type": "i"},
     {"name": "PWM_REV_AUX3", "value": 0, "type": "i"},
@@ -76,7 +76,5 @@
     {"name": "EKF_GNSS_VAR", "value": 1000.0, "type": "f"},
     {"name": "EKF_OF_VAR", "value": 1000.0, "type": "f"},
     {"name": "EKF_OF_MIN", "value": 50, "type": "i"},
-    {"name": "EKF_OF_MAX", "value": 2000, "type": "i"},
-
-    {"name": "ENABLE_HITL", "value": 0, "type": "i"}
+    {"name": "EKF_OF_MAX", "value": 2000, "type": "i"}
 ]

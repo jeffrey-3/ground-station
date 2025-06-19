@@ -25,11 +25,6 @@ class TelemetryManager:
         self.writer.writeheader()
         self.log_message = LogMessage()
     
-    def handle_cal_sensors(self, payload):
-        msg = aplink_cal_sensors()
-        msg.unpack(payload)
-        print(vars(msg))
-    
     def handle_gps_raw(self, payload):
         msg = aplink_gps_raw()
         msg.unpack(payload)

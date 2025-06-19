@@ -9,6 +9,7 @@ from param_manager import ParamManager
 from mission_manager import MissionManager
 from telemetry_manager import TelemetryManager
 from altitude_manager import AltitudeManager
+from calibration_manager import CalibrationManager
 
 class Radio:
     def __init__(self, ws_commands: Queue[dict], telemetry_json_output: Queue[dict]):
@@ -24,6 +25,7 @@ class Radio:
         self.mission_manager = MissionManager(self._transmit, self.telemetry_json_output)
         self.param_manager = ParamManager(self._transmit, self.telemetry_json_output)
         self.altitude_manager = AltitudeManager(self._transmit, self.telemetry_json_output)
+        self.calibration_manager = CalibrationManager(self._transmit, self.telemetry_json_output)
 
         threading.Thread(target=self._main_thread, daemon=True).start()
 
@@ -38,7 +40,8 @@ class Radio:
             "send_params": self.param_manager.send_params,
             "send_mission": self.mission_manager.send_mission,
             # "req_params": self._handle_request_params,
-            # "req_mission": self._handle_request_mission
+            # "req_mission": self._handle_request_mission,
+            "cal_gyro": self.calibration_manager.cal_gyro
         }
         
         while True:
@@ -85,11 +88,11 @@ class Radio:
             aplink_gps_raw.msg_id: self.telemetry_manager.handle_gps_raw,
             aplink_power.msg_id: self.telemetry_manager.handle_power,
             aplink_control_setpoints.msg_id: self.telemetry_manager.handle_control_setpoints,
-            aplink_cal_sensors.msg_id: self.telemetry_manager.handle_cal_sensors,
+            aplink_cal_sensors.msg_id: self.calibration_manager.handle_cal_sensors,
             aplink_param_set.msg_id: self.param_manager.handle_param_set,
             aplink_request_waypoint.msg_id: self.mission_manager.handle_request_waypoint,
             aplink_waypoints_ack.msg_id: self.mission_manager.handle_waypoints_ack,
-            aplink_set_altitude_result.msg_id: self.altitude_manager.handle_set_altitude_result,
+            aplink_set_altitude_result.msg_id: self.altitude_manager.handle_set_altitude_result
         }
         
         handler = message_handlers.get(msg_id)

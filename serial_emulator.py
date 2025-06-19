@@ -46,6 +46,8 @@ class SerialEmulator:
             self._handle_mission_item(payload)
         elif msg_id == aplink_set_altitude.msg_id:
             self._handle_set_altitude(payload)
+        elif msg_id == aplink_request_cal_sensors.msg_id:
+            self._handle_request_cal_sensors(payload)
 
     def _handle_param_set(self, payload):
         msg = aplink_param_set()
@@ -70,6 +72,19 @@ class SerialEmulator:
             self._send_bytes(aplink_waypoints_ack().pack(True))
         else:
             self._send_bytes(aplink_request_waypoint().pack(self.last_item_received))
+    
+    def _handle_request_cal_sensors(self, payload):
+        self._send_bytes(aplink_cal_sensors().pack(
+            gx=0.5,
+            gy=0.13434,
+            gz=0.2,
+            ax=0,
+            ay=0,
+            az=0,
+            mx=0,
+            my=0,
+            mz=0
+        ))
 
     def _generate_fake_telemetry(self):
         t = time.time()
